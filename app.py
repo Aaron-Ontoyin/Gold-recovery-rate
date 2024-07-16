@@ -1,9 +1,15 @@
 import streamlit as st
+from streamlit import session_state as ss
 import hydralit_components as hc
 
 from inputs import display_inputs
-from utils import identify
+from constants import Ore
 
+
+if ss.get("ore_type") is None:
+    ss["ore_type"] = "Yet to Identify"
+if ss.get("ore_type_reason") is None:
+    ss["ore_type_reason"] = "Enter Inputs and click on `Get Identification`"
 
 st.set_page_config(layout="wide")
 
@@ -21,28 +27,61 @@ menu_id = hc.nav_bar(
 
 display_inputs()
 
-if st.session_state.get("see_identification"):
-    with hc.HyLoader(
-        "Identifying ore and appropriate flowsheet",
-        hc.Loaders.standard_loaders,
-        index=1,
-    ):
-        ore_id = identify()
+if menu_id == "Home":
+    if ss.get("see_identification"):
+        with hc.HyLoader(
+            "Identifying ore and appropriate flowsheet",
+            hc.Loaders.standard_loaders,
+            index=1,
+        ):
+            Ore.identify()
 
-    identification_tab, simulation_tab = st.tabs(["Identification", "Simulation"])
-    with identification_tab:
+    action = st.radio(
+        "Action",
+        ["Ore Identification", "Simulation"],
+        horizontal=True,
+        label_visibility="hidden",
+    )
+    if action == "Ore Identification":
         hc.info_card(
-            title=ore_id["ore_type"],
-            content=ore_id["ore_type_reason"],
-            sentiment="good",
+            title=ss.ore_type,
+            content=ss.ore_type_reason,
+            sentiment="bad" if ss.ore_type == "Unknown" else "good",
             bar_value=90,
         )
-        hc.info_card(
-            title=ore_id["flowsheet"],
-            content=ore_id["flowsheet_reason"],
-            sentiment="good",
-            bar_value=85,
-        )
+    else:
+        if ss.ore_type == "Yet to Identify":
+            st.info(
+                "Enter the inputs and click on `Get Identification` to Identify a valid ore or first!"
+            )
+        else:
+            if ss.ore_type == "Unknown":
+                st.warning(
+                    "The ore type is unknown. Please check the inputs and try again"
+                )
+            else:
+                c1, c2, c3, c4, c5 = st.columns(5)
+                with c3:
+                    sim_btn = st.button("Run Simulation")
 
-    with simulation_tab:
-        st.button("Run Simulation", key="run_simulation")
+                if sim_btn:
+                    with hc.HyLoader(
+                        "Optimizing for the best params...",
+                        hc.Loaders.standard_loaders,
+                        index=2,
+                    ):
+                        st.write(Ore.overall_recovery())
+
+if menu_id == "About":
+    st.markdown(
+        """
+        This app is designed to help in identifying the ore type based on the mineralogy values.
+        """
+    )
+    st.markdown(
+        """
+        The app is divided into two sections:
+        - Identification: This section displays the identified ore type and the reason for identification.
+        - Simulation: This section allows you to run a simulation to get the best parameters for high ore recovery.
+        """
+    )

@@ -1,5 +1,7 @@
 import streamlit as st
 
+from constants import Ore
+
 
 def display_inputs():
     """
@@ -12,54 +14,50 @@ def display_inputs():
     Returns:
         None
     """
-    st.sidebar.number_input("Gold Head Grade", key="gold_head_grade", step=1)
-    st.sidebar.subheader("", divider="blue")
+    st.sidebar.title("Sample Inputs")
 
-    st.sidebar.selectbox(
-        "Particle Size Distribution",
-        options=[
-            "Choose Particle Size",
-            "P10 (microns)",
-            "P50 (microns)",
-            "P80 (microns)",
-        ],
-        key="particle_size_distribution",
-    )
-    st.sidebar.subheader("", divider="blue")
+    st.sidebar.text_input("Sample ID", placeholder="Enter sample ID here")
 
-    st.sidebar.number_input("Throughput", key="throughput")
-    st.sidebar.subheader("", divider="blue")
-
-    st.sidebar.selectbox(
-        "Reagents",
-        options=[
-            "Choose Reagent",
-            "CN (kg/t)",
-            "Lime (kg/t)",
-            "Lime (kg/t)",
-            "Collector A (g/t)",
-            "Collector B (g/t)",
-            "Frother (mL/t)",
-        ],
-        key="reagents",
-    )
-    st.sidebar.subheader("", divider="blue")
-
-    minerals = [
-        "Pyrite",
-        "Arsenopyrite",
-        "Chalcopyrite",
-        "Sphalerite",
-        "Galena",
-        "Calcite",
-        "Siderite",
-        "Quartz",
-        "Feldspars",
-        "Montmorillonite",
-        "Kaolinite",
-    ]
     with st.sidebar.expander("Ore Mineralogy (%)"):
-        for mineral in minerals:
-            st.number_input(f"{mineral}", key=f"{mineral}_mineralogy")
+        for mineral in Ore.minerals:
+            st.number_input(
+                f"{mineral}", key=f"{mineral}_mineralogy", min_value=0.0, step=0.01
+            )
 
-    st.sidebar.button("See Identification", key="see_identification", type="primary")
+    st.sidebar.number_input(
+        "Gold Head Grade", key="gold_head_grade", min_value=0.0, step=0.01
+    )
+    st.sidebar.subheader("", divider="blue")
+
+    if st.sidebar.checkbox("Particle Size as range", True):
+        st.sidebar.selectbox(
+            "Particle Size Distribution",
+            options=[
+                "Choose Particle Size",
+                "P10 (microns)",
+                "P50 (microns)",
+                "P80 (microns)",
+            ],
+            key="particle_size_distribution",
+        )
+    else:
+        st.sidebar.number_input(
+            "Particle Size Distribution",
+            min_value=0.0,
+            step=0.01,
+            key="particle_size_distribution",
+        )
+    st.sidebar.subheader("", divider="blue")
+
+    st.sidebar.number_input("Throughput", key="throughput", min_value=0.0, step=0.01)
+    st.sidebar.subheader("", divider="blue")
+
+    with st.sidebar.expander("Reagents"):
+        for reagent in Ore.reagents:
+            st.number_input(
+                f"{reagent}", key=f"{reagent}_reagent", min_value=0.0, step=0.01
+            )
+
+    st.sidebar.subheader("", divider="blue")
+
+    st.sidebar.button("Get Identification", key="see_identification", type="primary")
